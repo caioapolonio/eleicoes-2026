@@ -2,10 +2,13 @@
 
 O resultado do 1º turno da eleição presidencial de 2026 (TSE), cruzado com renda, cor ou raça e alfabetização do Censo 2022 (IBGE), município a município. O projeto tem duas partes: um pipeline em Python que baixa e confere os dados oficiais, e um site estático em Astro + d3 que mostra o que eles dizem.
 
+**Site:** https://eleicoes-2026.caioapolonio.dev
+
 ![Astro](https://img.shields.io/badge/Astro-7-BC52EE?logo=astro&logoColor=white)
 ![D3](https://img.shields.io/badge/d3-7-F9A03C?logo=d3dotjs&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
 ![Bun](https://img.shields.io/badge/Bun-1.3-000000?logo=bun&logoColor=white)
+[![CI](https://github.com/caioapolonio/eleicoes-2026/actions/workflows/ci.yml/badge.svg)](https://github.com/caioapolonio/eleicoes-2026/actions/workflows/ci.yml)
 
 ![Topo do site: título, resumo e os números nacionais](docs/hero.png)
 
@@ -16,6 +19,7 @@ O resultado do 1º turno da eleição presidencial de 2026 (TSE), cruzado com re
 - **Dentro de cada região**: correlações no país todo e dentro de cada uma das cinco regiões.
 - **Município a município**: renda × margem nos 5.570 municípios, em duas visões. A **dispersão** usa escala logarítmica e permite destacar uma região. O **mapa** pinta cada município pela margem ou pela renda. Um link terminado em `#mapa` já abre o mapa.
 - **Quanto cada fator explica**: o R² de regressões com região, renda, cor ou raça e alfabetização.
+- **2º turno**: uma aba própria, que espera a votação de 25 de outubro e os dados abertos do TSE para ganhar os mesmos gráficos.
 
 |                              Mapa                               |                                     Dispersão                                     |
 | :-------------------------------------------------------------: | :-------------------------------------------------------------------------------: |
@@ -62,6 +66,12 @@ O comando baixa os arquivos do TSE e do IBGE (cerca de 30 MB, guardados em `data
 bun run build
 ```
 
+## Deploy e CI/CD
+
+- **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): roda em todo push e pull request. Confere a formatação (Prettier), os tipos (`astro check`), o build do site, a sintaxe dos scripts Python e o build da imagem Docker.
+- **CD**: o site roda num [Coolify](https://coolify.io) próprio, ligado ao repositório por um GitHub App. Cada push na `main` dispara um novo deploy. O [`Dockerfile`](Dockerfile) checa os tipos e gera o site; se algo quebrar, o deploy falha e a versão anterior continua no ar.
+- **Servidor**: nginx ([`nginx.conf`](nginx.conf)) serve os arquivos estáticos com gzip, o que reduz os dados municipais de 1,3 MB para cerca de 220 KB, e com cache longo para os arquivos com hash.
+
 ## Fontes dos dados
 
 | Fonte                                                                                                                                                | O que vem dela                                                                                        |
@@ -99,13 +109,16 @@ Os arquivos do TSE usados aqui foram gerados em 18/10/2026.
 ```
 ├── build_dataset.py        # TSE + IBGE → CSV por município, com conferência dos totais
 ├── analyze.py              # faixas, correlações e regressões ponderadas
+├── Dockerfile, nginx.conf  # imagem de produção (build + nginx)
+├── .github/workflows/      # CI
 ├── data/
 │   ├── municipios_presidente_1t_2026.csv
 │   └── analysis/           # tabelas que o site lê
 ├── public/data/            # tabela municipal e malha do mapa, servidas ao navegador
 ├── scripts/prepare-site-data.ts
 └── src/
-    ├── pages/index.astro   # a página
+    ├── layouts/Base.astro  # cabeçalho com as abas dos turnos e rodapé de fontes
+    ├── pages/              # index.astro (1º turno) e segundo-turno.astro
     ├── components/         # tabela de correlações, card de municípios, rodapé de fontes
     ├── charts/             # gráficos em d3: barras, faixas, dispersão, mapa
     ├── lib/                # dados tipados, formatação pt-BR, utilitários de gráfico
