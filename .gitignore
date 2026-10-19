@@ -1,0 +1,20 @@
+# build output
+dist/
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# downloaded TSE/IBGE files (rebuilt by `bun run data`)
+data/raw/
+
+# environment variables
+.env
+.env.production
+
+.DS_Store
+__pycache__/
+
+# copy of the claude.ai dashboard page; it only runs inside that dashboard
+dashboard/

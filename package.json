@@ -1,0 +1,29 @@
+{
+  "name": "eleicoes-2026",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "data": "uv run build_dataset.py && uv run analyze.py && bun scripts/prepare-site-data.ts",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@fontsource-variable/ibm-plex-sans": "5.3.0",
+    "@fontsource-variable/newsreader": "5.3.0",
+    "astro": "7.4.0",
+    "d3": "7.9.0",
+    "topojson-client": "3.1.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/d3": "7.4.3",
+    "@types/topojson-client": "3.1.5",
+    "prettier": "3.9.10",
+    "prettier-plugin-astro": "1.1.1",
+    "typescript": "^6"
+  }
+}

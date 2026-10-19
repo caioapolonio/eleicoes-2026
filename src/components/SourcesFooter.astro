@@ -1,0 +1,138 @@
+---
+const sources = [
+  {
+    name: 'TSE — Portal de Dados Abertos, Resultados 2026',
+    href: 'https://dadosabertos.tse.jus.br/dataset/resultados-2026',
+    detail:
+      'Votação por partido por município e zona (para presidente, o número do partido é o do candidato) e detalhe da apuração por município e zona: eleitores aptos, comparecimento, brancos e nulos. Arquivos gerados em 18/10/2026.',
+  },
+  {
+    name: 'TSE — Divulgação de resultados',
+    href: 'https://resultados.tse.jus.br/',
+    detail:
+      'Total nacional oficial do 1º turno, usado para conferir as somas, e a tabela de municípios que liga o código do TSE ao código do IBGE.',
+  },
+  {
+    name: 'IBGE — Censo Demográfico 2022, tabela 10295',
+    href: 'https://sidra.ibge.gov.br/tabela/10295',
+    detail: 'Rendimento nominal médio mensal domiciliar per capita.',
+  },
+  {
+    name: 'IBGE — Censo Demográfico 2022, tabela 9605',
+    href: 'https://sidra.ibge.gov.br/tabela/9605',
+    detail: 'População residente por cor ou raça (pretos e pardos somados).',
+  },
+  {
+    name: 'IBGE — Censo Demográfico 2022, tabela 9543',
+    href: 'https://sidra.ibge.gov.br/tabela/9543',
+    detail: 'Taxa de alfabetização das pessoas de 15 anos ou mais.',
+  },
+  {
+    name: 'IBGE — API de malhas geográficas',
+    href: 'https://servicodados.ibge.gov.br/api/docs/malhas?versao=3',
+    detail: 'Malha municipal do mapa, em qualidade mínima.',
+  },
+  {
+    name: 'IBGE — API de localidades',
+    href: 'https://servicodados.ibge.gov.br/api/docs/localidades',
+    detail: 'Regiões e unidades da federação de cada município.',
+  },
+]
+---
+
+<footer class="footer" id="fontes">
+  <div class="block">
+    <h2>Fontes dos dados</h2>
+    <ul class="sources">
+      {sources.map((source) => (
+        <li>
+          <a href={source.href} target="_blank" rel="noopener noreferrer">
+            {source.name}
+          </a>
+          <span>{source.detail}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+  <div class="block">
+    <h2>Como foi feito</h2>
+    <ul class="method">
+      <li>
+        Votos somados por município a partir das zonas eleitorais. Votos do exterior ficam de fora,
+        então os percentuais nacionais diferem do oficial na segunda casa decimal.
+      </li>
+      <li>
+        Cada município pesa pelo número de votos válidos nas faixas, correlações e regressões; a
+        renda entra em escala logarítmica.
+      </li>
+      <li>
+        Boa Esperança do Norte (MT) foi criado depois do Censo 2022 e fica fora das análises de
+        perfil e do mapa.
+      </li>
+      <li>
+        São relações entre municípios, não entre eleitores, e não dizem como cada pessoa votou. O
+        perfil é de 2022 e o voto, de 2026.
+      </li>
+    </ul>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+    gap: var(--gap-lg) var(--gap-xl);
+    padding-top: var(--gap-lg);
+    border-top: 1px solid var(--line);
+    font-size: var(--text-caption);
+    color: var(--fg-muted);
+  }
+
+  .block {
+    display: grid;
+    gap: var(--gap-sm);
+    align-content: start;
+    min-width: 0;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: var(--text-body);
+    font-weight: 600;
+    color: var(--fg);
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: var(--gap-sm);
+  }
+
+  .sources li {
+    display: grid;
+    gap: 2px;
+  }
+
+  .sources a {
+    color: var(--fg);
+    font-weight: 500;
+  }
+
+  .method li {
+    padding-left: 0.875rem;
+    position: relative;
+  }
+
+  .method li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.6em;
+    width: 0.3rem;
+    height: 0.3rem;
+    border-radius: 50%;
+    background: var(--axis);
+  }
+</style>

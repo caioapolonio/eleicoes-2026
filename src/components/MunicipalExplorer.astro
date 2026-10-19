@@ -1,0 +1,320 @@
+---
+import { REGIONS, regionColor } from '../lib/data'
+---
+
+<div class="card explorer" id="municipios">
+  <div class="explorer-head">
+    <div class="explorer-title">
+      <h3>Renda per capita × margem de Flávio sobre Lula</h3>
+      <p class="note" data-note="scatter">
+        Renda domiciliar per capita média (Censo 2022) em escala logarítmica; margem de Flávio sobre
+        Lula em pontos percentuais. Clique numa região para destacá-la.
+      </p>
+      <p class="note" data-note="map" hidden>
+        Cada município pintado pela margem de Flávio sobre Lula ou pela renda per capita (Censo
+        2022). As linhas marcam as divisas estaduais.
+      </p>
+    </div>
+    <div class="segmented" role="tablist" aria-label="Forma de ver os municípios">
+      <button
+        type="button"
+        role="tab"
+        id="tab-scatter"
+        aria-controls="panel-scatter"
+        aria-selected="true"
+        data-view="scatter"
+      >
+        Dispersão
+      </button>
+      <button
+        type="button"
+        role="tab"
+        id="tab-map"
+        aria-controls="panel-map"
+        aria-selected="false"
+        tabindex="-1"
+        data-view="map"
+      >
+        Mapa
+      </button>
+    </div>
+  </div>
+
+  <div id="panel-scatter" role="tabpanel" aria-labelledby="tab-scatter" class="panel">
+    <div class="chips" role="group" aria-label="Destacar região">
+      {REGIONS.map((region) => (
+        <button type="button" class="chip" aria-pressed="false" data-region={region}>
+          <span class="swatch" style={`background: ${regionColor(region)}`} />
+          {region}
+        </button>
+      ))}
+    </div>
+    <div class="chart loading" id="chart-scatter"></div>
+  </div>
+
+  <div id="panel-map" role="tabpanel" aria-labelledby="tab-map" class="panel" hidden>
+    <div class="map-controls">
+      <div class="segmented small" role="group" aria-label="O que pintar no mapa">
+        <button type="button" aria-pressed="true" data-metric="margem">
+          Margem
+        </button>
+        <button type="button" aria-pressed="false" data-metric="renda">
+          Renda
+        </button>
+      </div>
+      <div class="map-legend-host"></div>
+    </div>
+    <div class="chart map loading" id="chart-map"></div>
+  </div>
+</div>
+
+<script>
+  import { mount, el, type Mounted } from '../lib/chart-kit'
+  import type { MunicipalityRow } from '../lib/data'
+  import { incomeScatter } from '../charts/scatter'
+  import { municipalMap, type MapMetric, type MunicipalTopology } from '../charts/map'
+
+  const root = document.getElementById('municipios')!
+  const base = import.meta.env.BASE_URL.replace(/\/?$/, '/')
+  const scatterBox = document.getElementById('chart-scatter')!
+  const mapBox = document.getElementById('chart-map')!
+  const legendHost = root.querySelector<HTMLElement>('.map-legend-host')!
+
+  let focus: string | null = null
+  let metric: MapMetric = 'margem'
+  let scatter: Mounted | undefined
+  let map: Mounted | undefined
+  let topology: Promise<MunicipalTopology> | undefined
+
+  const getJson = async <T,>(path: string): Promise<T> => {
+    const response = await fetch(base + path)
+    if (!response.ok) throw new Error(`${path}: ${response.status}`)
+    return response.json()
+  }
+
+  const fail = (box: HTMLElement) => {
+    box.classList.remove('loading')
+    box.replaceChildren(el('p', 'note', 'Não foi possível carregar os dados dos municípios.'))
+  }
+
+  const rows = getJson<MunicipalityRow[]>('data/municipios.json')
+
+  rows
+    .then((data) => {
+      scatterBox.classList.remove('loading')
+      scatter = mount(scatterBox, (box, width) => incomeScatter(box, width, data, focus))
+    })
+    .catch(() => fail(scatterBox))
+
+  function showMap() {
+    if (map) return map.sync()
+    topology ??= getJson<MunicipalTopology>('data/municipios.topo.json')
+    Promise.all([rows, topology])
+      .then(([data, topo]) => {
+        mapBox.classList.remove('loading')
+        map = mount(mapBox, (box, width) =>
+          municipalMap(box, width, data, topo, metric, legendHost),
+        )
+      })
+      .catch(() => fail(mapBox))
+  }
+
+  // View tabs
+  const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role=tab]')]
+  function select(view: string) {
+    for (const tab of tabs) {
+      const active = tab.dataset.view === view
+      tab.setAttribute('aria-selected', String(active))
+      tab.tabIndex = active ? 0 : -1
+      document.getElementById(tab.getAttribute('aria-controls')!)!.hidden = !active
+    }
+    root.querySelectorAll<HTMLElement>('[data-note]').forEach((note) => {
+      note.hidden = note.dataset.note !== view
+    })
+    if (view === 'map') showMap()
+    else scatter?.sync()
+  }
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => select(tab.dataset.view!))
+    tab.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
+      const next = tabs[(i + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length]
+      next.focus()
+      select(next.dataset.view!)
+    })
+  })
+
+  // A link ending in #mapa opens the card on the map
+  if (location.hash === '#mapa') {
+    select('map')
+    root.scrollIntoView()
+  }
+
+  // Region focus on the scatter: click a region to highlight it, click again to show all
+  const chips = [...root.querySelectorAll<HTMLButtonElement>('.chip')]
+  for (const chip of chips) {
+    chip.addEventListener('click', () => {
+      focus = focus === chip.dataset.region ? null : chip.dataset.region!
+      for (const other of chips)
+        other.setAttribute('aria-pressed', String(other.dataset.region === focus))
+      root.querySelector('.chips')!.classList.toggle('has-focus', focus != null)
+      scatter?.redraw()
+    })
+  }
+
+  // Map metric
+  const metricButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-metric]')]
+  for (const button of metricButtons) {
+    button.addEventListener('click', () => {
+      metric = button.dataset.metric as MapMetric
+      for (const other of metricButtons)
+        other.setAttribute('aria-pressed', String(other === button))
+      map?.redraw()
+    })
+  }
+
+  // The map's colors are interpolated from theme tokens, so redraw it when the theme flips
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => map?.redraw())
+</script>
+
+<style>
+  .explorer {
+    gap: var(--gap-md);
+  }
+
+  .explorer-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--gap-md);
+  }
+
+  .explorer-title {
+    display: grid;
+    gap: var(--gap-sm);
+    min-width: 0;
+    flex: 1 1 22rem;
+  }
+
+  .explorer-title h3 {
+    margin: 0;
+    font-size: var(--text-heading);
+    font-weight: 600;
+  }
+
+  .explorer-title .note {
+    max-width: 62ch;
+  }
+
+  .panel {
+    display: grid;
+    gap: var(--gap-md);
+  }
+
+  .segmented {
+    display: inline-flex;
+    padding: 3px;
+    gap: 2px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--bg);
+  }
+
+  .segmented button {
+    font: inherit;
+    font-size: var(--text-caption);
+    font-weight: 500;
+    color: var(--fg-muted);
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.375rem 0.875rem;
+    cursor: pointer;
+  }
+
+  .segmented button:hover {
+    color: var(--fg);
+  }
+
+  .segmented button[aria-selected='true'],
+  .segmented button[aria-pressed='true'] {
+    background: var(--panel);
+    color: var(--fg);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-xs);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font: inherit;
+    font-size: var(--text-caption);
+    color: var(--fg-muted);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.25rem 0.625rem;
+    cursor: pointer;
+  }
+
+  .chip:hover {
+    color: var(--fg);
+    border-color: var(--axis);
+  }
+
+  .chips.has-focus .chip[aria-pressed='false'] .swatch {
+    background: var(--muted-mark) !important;
+  }
+
+  .chip[aria-pressed='true'] {
+    color: var(--fg);
+    border-color: var(--fg);
+  }
+
+  .map-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--gap-md) var(--gap-lg);
+  }
+
+  .map-legend-host {
+    flex: 1 1 16rem;
+    max-width: 26rem;
+    min-width: 0;
+  }
+
+  .chart.map.loading {
+    min-height: 20rem;
+  }
+
+  :global(.map-legend) {
+    display: grid;
+    gap: 4px;
+    font-size: var(--text-caption);
+    color: var(--fg-muted);
+  }
+
+  :global(.map-legend-bar) {
+    height: 0.625rem;
+    border-radius: 3px;
+  }
+
+  :global(.map-legend-ticks) {
+    position: relative;
+    height: 1.4em;
+  }
+
+  :global(.map-legend-ticks span) {
+    position: absolute;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+</style>

@@ -1,0 +1,110 @@
+---
+import { correlations } from '../lib/data'
+import { fmt } from '../lib/format'
+
+const bar = (r: number) => `left: ${r >= 0 ? 50 : 50 + r * 50}%; width: ${Math.abs(r) * 50}%`
+---
+
+<div class="table-wrap">
+  <table class="corr">
+    <thead>
+      <tr>
+        <th scope="col">Recorte</th>
+        <th scope="col">Variável</th>
+        <th scope="col">Com Flávio</th>
+        <th scope="col">Com Lula</th>
+      </tr>
+    </thead>
+    <tbody>
+      {correlations.map((row, i) => (
+        <tr class:list={{ 'group-start': i > 0 && correlations[i - 1].escopo !== row.escopo }}>
+          <td class="scope">{row.escopo}</td>
+          <td>{row.rotulo}</td>
+          {(['flavio', 'lula'] as const).map((key) => {
+            const r = row[`r_${key}`]
+            return (
+              <td>
+                <span class="rcell">
+                  <span class="rnum">{fmt.r(r)}</span>
+                  <span class="rbar" aria-hidden="true">
+                    <span class="rfill" style={`${bar(r)}; background: var(--${key})`} />
+                  </span>
+                </span>
+              </td>
+            )
+          })}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  .corr {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-caption);
+    font-variant-numeric: tabular-nums;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--fg-muted);
+    padding: 0.375rem 0.625rem;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.3rem 0.625rem;
+    white-space: nowrap;
+  }
+
+  tr.group-start td {
+    border-top: 1px solid var(--line);
+  }
+
+  .scope {
+    color: var(--fg-muted);
+  }
+
+  .rcell {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap-sm);
+  }
+
+  .rnum {
+    min-width: 3.2em;
+    text-align: right;
+  }
+
+  .rbar {
+    position: relative;
+    flex: none;
+    width: 4.5rem;
+    height: 0.5rem;
+  }
+
+  .rbar::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -2px;
+    bottom: -2px;
+    width: 1px;
+    background: var(--axis);
+  }
+
+  .rfill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 2px;
+  }
+</style>

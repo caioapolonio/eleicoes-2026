@@ -1,0 +1,327 @@
+/* Layout: one centered column of cards; serif for titles and headline figures, sans for everything read or scanned. */
+:root {
+  color-scheme: light;
+  --bg: #f4f5f7;
+  --panel: #ffffff;
+  --fg: #15171c;
+  --fg-muted: #5a5f6b;
+  --line: #e1e3e8;
+  --grid: #eceef2;
+  --axis: #c3c7cf;
+  --ref: #868c98;
+  --popover: #ffffff;
+  --shadow: 0 6px 24px rgb(20 24 32 / 0.12);
+  --focus: #2a78d6;
+
+  /* candidates: one diverging pair, blue ↔ red, gray midpoint */
+  --flavio: #2a78d6;
+  --lula: #e34948;
+  --midpoint: #e6e5e1;
+
+  /* regions (identity only; never used for candidates) */
+  --reg-norte: #008300;
+  --reg-nordeste: #eda100;
+  --reg-centro-oeste: #6250d6;
+  --reg-sudeste: #1baf7a;
+  --reg-sul: #e87ba4;
+  --muted-mark: #cfd2d8;
+
+  /* income ramp for the map: one hue, light → dark */
+  --seq-low: #ebe8fb;
+  --seq-high: #33278f;
+
+  --font-display: 'Newsreader Variable', Georgia, 'Times New Roman', serif;
+  --font-body: 'IBM Plex Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --text-caption: 0.8125rem;
+  --text-body: 1rem;
+  --text-heading: 1.125rem;
+  --text-section: 1.625rem;
+  --text-title: clamp(2rem, 1.4rem + 2.6vw, 3.25rem);
+  --gap-xs: 0.25rem;
+  --gap-sm: 0.5rem;
+  --gap-md: 1rem;
+  --gap-lg: 1.5rem;
+  --gap-xl: 3rem;
+  --radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #111215;
+    --panel: #1a1b1f;
+    --fg: #eceef2;
+    --fg-muted: #a2a7b2;
+    --line: #2a2c32;
+    --grid: #23252a;
+    --axis: #3e414a;
+    --ref: #8a909c;
+    --popover: #24262c;
+    --shadow: 0 6px 24px rgb(0 0 0 / 0.45);
+    --focus: #3987e5;
+    --flavio: #3987e5;
+    --lula: #e66767;
+    --midpoint: #3a3a37;
+    --reg-norte: #008300;
+    --reg-nordeste: #c98500;
+    --reg-centro-oeste: #9085e9;
+    --reg-sudeste: #199e70;
+    --reg-sul: #d55181;
+    --muted-mark: #3a3d45;
+    --seq-low: #26233a;
+    --seq-high: #b8aeff;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #111215;
+  --panel: #1a1b1f;
+  --fg: #eceef2;
+  --fg-muted: #a2a7b2;
+  --line: #2a2c32;
+  --grid: #23252a;
+  --axis: #3e414a;
+  --ref: #8a909c;
+  --popover: #24262c;
+  --shadow: 0 6px 24px rgb(0 0 0 / 0.45);
+  --focus: #3987e5;
+  --flavio: #3987e5;
+  --lula: #e66767;
+  --midpoint: #3a3a37;
+  --reg-norte: #008300;
+  --reg-nordeste: #c98500;
+  --reg-centro-oeste: #9085e9;
+  --reg-sudeste: #199e70;
+  --reg-sul: #d55181;
+  --muted-mark: #3a3d45;
+  --seq-low: #26233a;
+  --seq-high: #b8aeff;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--axis);
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.page {
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-block: var(--gap-xl);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: var(--gap-xl);
+}
+
+.section {
+  display: grid;
+  gap: var(--gap-md);
+  scroll-margin-top: var(--gap-lg);
+}
+
+.section > h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--text-section);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.section > p {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--fg-muted);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  align-items: start;
+  gap: var(--gap-md);
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: var(--gap-md);
+}
+
+.card {
+  min-width: 0;
+  display: grid;
+  gap: var(--gap-sm);
+  align-content: start;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--gap-lg);
+}
+
+.card > h3 {
+  margin: 0;
+  font-size: var(--text-heading);
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.note {
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--fg-muted);
+}
+
+.swatch {
+  flex: none;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-xs) var(--gap-md);
+  font-size: var(--text-caption);
+  color: var(--fg-muted);
+}
+
+.legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-xs);
+}
+
+/* charts */
+.chart {
+  position: relative;
+  min-width: 0;
+  min-height: 12rem;
+}
+
+.chart svg {
+  display: block;
+  overflow: visible;
+}
+
+.chart text {
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  fill: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart .val,
+.chart .end {
+  fill: var(--fg);
+}
+
+.chart .grid-lines line {
+  stroke: var(--grid);
+}
+
+.chart .ref {
+  stroke: var(--ref);
+}
+
+.chart .line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart .dot {
+  stroke: var(--panel);
+  stroke-width: 2;
+}
+
+.chart .rule {
+  stroke: var(--axis);
+}
+
+.chart .hl {
+  stroke: var(--fg);
+  stroke-width: 1.5;
+}
+
+.chart.loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: var(--grid);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart.loading::after {
+    animation: none;
+  }
+}
+
+.tip {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  display: grid;
+  gap: 2px;
+  white-space: nowrap;
+  background: var(--popover);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 0.375rem 0.625rem;
+  font-size: var(--text-caption);
+}
+
+.tip-head {
+  color: var(--fg-muted);
+}
+
+.tip-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-xs);
+  font-variant-numeric: tabular-nums;
+}
