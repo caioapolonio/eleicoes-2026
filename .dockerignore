@@ -1,0 +1,9 @@
+.git
+.github
+.astro
+node_modules
+dist
+data/raw
+dashboard
+docs
+**/__pycache__

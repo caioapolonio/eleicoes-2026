@@ -17,8 +17,8 @@ O resultado do 1º turno da eleição presidencial de 2026 (TSE), cruzado com re
 - **Município a município**: renda × margem nos 5.570 municípios, em duas visões. A **dispersão** usa escala logarítmica e permite destacar uma região. O **mapa** pinta cada município pela margem ou pela renda. Um link terminado em `#mapa` já abre o mapa.
 - **Quanto cada fator explica**: o R² de regressões com região, renda, cor ou raça e alfabetização.
 
-| Mapa | Dispersão |
-| :---: | :---: |
+|                              Mapa                               |                                     Dispersão                                     |
+| :-------------------------------------------------------------: | :-------------------------------------------------------------------------------: |
 | ![Mapa municipal da margem de Flávio sobre Lula](docs/mapa.png) | ![Renda per capita em escala log contra a margem, por região](docs/dispersao.png) |
 
 ![Voto por faixas de renda, cor ou raça e alfabetização](docs/perfil.png)
@@ -64,16 +64,16 @@ bun run build
 
 ## Fontes dos dados
 
-| Fonte | O que vem dela |
-| --- | --- |
-| [TSE · Dados Abertos, Resultados 2026](https://dadosabertos.tse.jus.br/dataset/resultados-2026) | Votação por partido por município e zona; detalhe da apuração (aptos, comparecimento, brancos, nulos) |
-| [TSE · Divulgação de resultados](https://resultados.tse.jus.br/) | Total nacional oficial, usado para conferir as somas, e a tabela que liga o código TSE ao código IBGE |
-| [IBGE · Censo 2022, tabela 10295](https://sidra.ibge.gov.br/tabela/10295) | Rendimento domiciliar per capita médio e mediano |
-| [IBGE · Censo 2022, tabela 9605](https://sidra.ibge.gov.br/tabela/9605) | População por cor ou raça |
-| [IBGE · Censo 2022, tabela 9543](https://sidra.ibge.gov.br/tabela/9543) | Taxa de alfabetização de 15 anos ou mais |
-| [IBGE · Estimativas de população (6579)](https://sidra.ibge.gov.br/tabela/6579) e [PIB dos Municípios (5938)](https://sidra.ibge.gov.br/tabela/5938) | População estimada de 2026 e PIB de 2023 (no CSV, não usados no site) |
-| [IBGE · API de malhas](https://servicodados.ibge.gov.br/api/docs/malhas?versao=3) | Malha municipal do mapa |
-| [IBGE · API de localidades](https://servicodados.ibge.gov.br/api/docs/localidades) | Região, região intermediária e região imediata de cada município |
+| Fonte                                                                                                                                                | O que vem dela                                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [TSE · Dados Abertos, Resultados 2026](https://dadosabertos.tse.jus.br/dataset/resultados-2026)                                                      | Votação por partido por município e zona; detalhe da apuração (aptos, comparecimento, brancos, nulos) |
+| [TSE · Divulgação de resultados](https://resultados.tse.jus.br/)                                                                                     | Total nacional oficial, usado para conferir as somas, e a tabela que liga o código TSE ao código IBGE |
+| [IBGE · Censo 2022, tabela 10295](https://sidra.ibge.gov.br/tabela/10295)                                                                            | Rendimento domiciliar per capita médio e mediano                                                      |
+| [IBGE · Censo 2022, tabela 9605](https://sidra.ibge.gov.br/tabela/9605)                                                                              | População por cor ou raça                                                                             |
+| [IBGE · Censo 2022, tabela 9543](https://sidra.ibge.gov.br/tabela/9543)                                                                              | Taxa de alfabetização de 15 anos ou mais                                                              |
+| [IBGE · Estimativas de população (6579)](https://sidra.ibge.gov.br/tabela/6579) e [PIB dos Municípios (5938)](https://sidra.ibge.gov.br/tabela/5938) | População estimada de 2026 e PIB de 2023 (no CSV, não usados no site)                                 |
+| [IBGE · API de malhas](https://servicodados.ibge.gov.br/api/docs/malhas?versao=3)                                                                    | Malha municipal do mapa                                                                               |
+| [IBGE · API de localidades](https://servicodados.ibge.gov.br/api/docs/localidades)                                                                   | Região, região intermediária e região imediata de cada município                                      |
 
 Os arquivos do TSE usados aqui foram gerados em 18/10/2026.
 

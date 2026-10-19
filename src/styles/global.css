@@ -325,3 +325,40 @@ a:hover {
   gap: var(--gap-xs);
   font-variant-numeric: tabular-nums;
 }
+
+/* page header shared by both rounds */
+.hero {
+  display: grid;
+  gap: var(--gap-md);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: var(--text-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.page-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--text-title);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.takeaway {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+
+.takeaway b {
+  font-weight: 600;
+  color: var(--fg);
+}

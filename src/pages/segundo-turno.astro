@@ -1,0 +1,101 @@
+---
+import Base from '../layouts/Base.astro'
+import { summary } from '../lib/data'
+import { fmt } from '../lib/format'
+
+const description =
+  'Flávio Bolsonaro e Lula disputam o 2º turno em 25 de outubro de 2026. Os mapas e gráficos por município entram aqui assim que o TSE publicar os dados da votação.'
+---
+
+<Base title="2º turno 2026 por município" description={description} current="segundo">
+  <header class="hero">
+    <p class="eyebrow">Eleição presidencial · 2º turno · 25 de outubro de 2026</p>
+    <h1 class="page-title">2º turno 2026 por município</h1>
+    <p class="takeaway">
+      Flávio Bolsonaro e Lula voltam às urnas no domingo, 25 de outubro. No 1º turno, Flávio teve{' '}
+      <b>{fmt.pct(summary.pct_flavio)}</b> dos votos válidos e Lula,{' '}
+      <b>{fmt.pct(summary.pct_lula)}</b>.
+    </p>
+  </header>
+
+  <section class="card waiting" aria-labelledby="aguardando">
+    <p class="status">
+      <span class="dot" aria-hidden="true"></span>Aguardando a apuração
+    </p>
+    <h2 id="aguardando">Os mapas do 2º turno chegam depois da votação</h2>
+    <p>
+      Esta aba vai ganhar os mesmos gráficos do 1º turno, município a município, assim que o TSE
+      publicar os dados abertos da votação. Até lá, o retrato completo do 1º turno continua na outra
+      aba.
+    </p>
+    <a class="button" href="/">
+      Ver o 1º turno
+    </a>
+  </section>
+</Base>
+
+<style>
+  .waiting {
+    gap: var(--gap-md);
+    padding: clamp(1.5rem, 1rem + 3vw, 3rem);
+    justify-items: start;
+  }
+
+  .status {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap-sm);
+    font-size: var(--text-caption);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  .dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--reg-nordeste);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dot {
+      animation: none;
+    }
+  }
+
+  h2 {
+    margin: 0;
+    max-width: 24ch;
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: var(--text-section);
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  .waiting p:not(.status) {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--fg-muted);
+  }
+
+  .button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    font-size: var(--text-caption);
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--panel);
+    background: var(--fg);
+  }
+
+  .button:hover {
+    opacity: 0.85;
+  }
+</style>
