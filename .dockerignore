@@ -14,3 +14,6 @@ docs
 playwright-report
 test-results
 *.log
+
+# Coolify generates this deployment file outside the application source.
+/docker-compose.yaml

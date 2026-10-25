@@ -52,6 +52,9 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bunx playwright install --with-deps chromium
+      - name: Reproduce Coolify's generated deployment file
+        run: |
+          printf 'services:\n  app: {image: example}\n' > docker-compose.yaml
       - name: Build the same image used by Coolify
         run: docker build -t eleicoes-2026:ci .
       - name: Start production nginx
