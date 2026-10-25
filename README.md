@@ -1,4 +1,4 @@
-# 1º turno 2026 por município
+# Eleições 2026: análise municipal e apuração ao vivo
 
 O resultado do 1º turno da eleição presidencial de 2026 (TSE), cruzado com renda, cor ou raça e alfabetização do Censo 2022 (IBGE), município a município. O projeto tem duas partes: um pipeline em Python que baixa e confere os dados oficiais, e um site estático em Astro + d3 que mostra o que eles dizem.
 
@@ -19,13 +19,41 @@ O resultado do 1º turno da eleição presidencial de 2026 (TSE), cruzado com re
 - **Dentro de cada região**: correlações no país todo e dentro de cada uma das cinco regiões.
 - **Município a município**: renda × margem nos 5.570 municípios, em duas visões. A **dispersão** usa escala logarítmica e permite destacar uma região. O **mapa** pinta cada município pela margem ou pela renda. Um link terminado em `#mapa` já abre o mapa.
 - **Quanto cada fator explica**: o R² de regressões com região, renda, cor ou raça e alfabetização.
-- **2º turno**: uma aba própria, que espera a votação de 25 de outubro e os dados abertos do TSE para ganhar os mesmos gráficos.
+- **2º turno ao vivo**: mapa interativo por estado, resultados nacionais com exterior incluído, 186 localidades do exterior com busca, consulta por município e zona eleitoral, disputas de governador, participação e todos os tipos de votos. Os dados vêm diretamente dos JSONs de divulgação do TSE, com atualização automática, sem depender de republicar o site.
 
 |                              Mapa                               |                                     Dispersão                                     |
 | :-------------------------------------------------------------: | :-------------------------------------------------------------------------------: |
 | ![Mapa municipal da margem de Flávio sobre Lula](docs/mapa.png) | ![Renda per capita em escala log contra a margem, por região](docs/dispersao.png) |
 
 ![Voto por faixas de renda, cor ou raça e alfabetização](docs/perfil.png)
+
+## Apuração do segundo turno
+
+A rota `/segundo-turno/` consulta a configuração oficial `ele-c.json` (EA11) para descobrir o pleito e as eleições de segundo turno de 2026. Na consulta de 25/10/2026, foram encontrados o pleito **3221**, a eleição presidencial **6258** e a eleição estadual **6260**, com disputas de governador em AC, AM, DF, ES, RN e TO. Os códigos não são adivinhados nem reutilizados do primeiro turno.
+
+- **EA20**: total nacional, exterior (ZZ), cada UF, municípios/localidades do exterior e zonas eleitorais. O painel apresenta candidaturas, partido/coligação, vices, votos, percentuais, eleito informado pelo TSE, seções, eleitorado, comparecimento, abstenção e categorias de votos, com o JSON completo para consulta e download.
+- **O que mudou desde o 1º turno**: dois rankings de barras, “Onde Lula cresceu” e “Onde Flávio cresceu”, com os sete maiores avanços, cores dos candidatos e expansão dos demais estados. Um clique na UF abre seus detalhes no mapa. A base é o percentual parcial de cada candidato no estado no segundo turno menos seu percentual final no primeiro, em pontos percentuais, considerando todos os votos válidos de cada turno. Não é um cruzamento das mesmas urnas. As listas e os valores atualizam com a apuração, preservando a lista expandida. Estados sem votos divulgados não recebem variação. Os 54 percentuais estáticos de `data/analysis/ufs.json` foram conferidos contra os EA20 estaduais da eleição 6257 em 25/10/2026.
+- **EA12**: municípios e localidades, códigos IBGE/TSE e zonas. O exterior é apresentado pelas localidades que o TSE fornece; não há agrupamento inventado por país.
+- **EA15**: acompanha a publicação das localidades estrangeiras e atualiza resultados que mudaram. Os horários do acompanhamento e do resultado são comparados antes de considerar a atualização concluída, pois os arquivos podem chegar à CDN em momentos diferentes.
+- **EA16/EA18**: consulta sob demanda das seções de uma zona, das agregações e dos arquivos de urna (BU, RDV e logs), conforme o TSE os disponibilizar. O auxiliar só é solicitado quando o cadastro sinaliza sua publicação, evitando consultar arquivos inexistentes.
+- **EA14** e os demais arquivos de configuração/acompanhamento ficam acessíveis nas fontes. A malha do IBGE já incluída no projeto é agrupada por UF, sem serviço externo de mapas.
+
+A consulta roda no navegador, com CORS do TSE, e mantém o deploy estático em nginx. Cada ciclo termina e aguarda 30 segundos até a próxima consulta; o carregamento inicial das localidades pode levar mais tempo. Abas ocultas suspendem novos ciclos. O cliente limita o início das requisições a uma a cada 150 ms, agrupa consultas iguais em andamento, revalida o cache HTTP, aplica timeout de 15 segundos e espera cinco minutos antes de repetir um 404. Um 403/429 pausa o cliente por mais de dez minutos, evitando renovar um bloqueio. Uma falha mantém o último resultado recebido, com aviso e horário, sem substituir os dados por zeros.
+
+O TSE informa o início da divulgação às **17h de Brasília de 25/10/2026**. Antes disso, arquivos de preparação podem mostrar zero votos. `dv=n` bloqueia a apresentação dos votos; ausência de dados aparece como “—”. Ter 100% das seções totalizadas não significa totalização final nem autoriza indicar um eleito. O total nacional **já inclui o exterior**: o agregado ZZ não é somado novamente. A metodologia do primeiro turno continua específica daquela análise e não se aplica ao painel ao vivo.
+
+Referência: [documentação técnica oficial do TSE](https://www.tse.jus.br/eleicoes/informacoes-tecnicas-sobre-a-divulgacao-de-resultados).
+
+### Verificação
+
+```bash
+bun test
+bunx prettier --check .
+bunx astro check
+bun run build
+```
+
+Os testes usam um arquivo oficial de preparação de 24/10/2026 como fixture e cobrem identificação da eleição, códigos com zeros à esquerda, resultados zerados/empatados, divulgação suspensa, dados simulados ou de outro turno, chamadas concorrentes e tratamento dos limites de acesso. As consultas reais e os estados de falha também são verificados no navegador durante o desenvolvimento.
 
 ## O que os dados mostram
 
@@ -68,9 +96,44 @@ bun run build
 
 ## Deploy e CI/CD
 
-- **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): roda em todo push e pull request. Confere a formatação (Prettier), os tipos (`astro check`), o build do site, a sintaxe dos scripts Python e o build da imagem Docker.
-- **CD**: o site roda num [Coolify](https://coolify.io) próprio, ligado ao repositório por um GitHub App. Cada push na `main` dispara um novo deploy. O [`Dockerfile`](Dockerfile) checa os tipos e gera o site; se algo quebrar, o deploy falha e a versão anterior continua no ar.
-- **Servidor**: nginx ([`nginx.conf`](nginx.conf)) serve os arquivos estáticos com gzip, o que reduz os dados municipais de 1,3 MB para cerca de 220 KB, e com cache longo para os arquivos com hash.
+A hospedagem estática com Docker e nginx é adequada para este projeto: os votos do segundo turno são consultados pelo navegador e não precisam de um novo build para se atualizar. O pipeline Python refaz a análise do primeiro turno e não roda durante a apuração ao vivo.
+
+- **Validação compartilhada**: `bun run verify` confere formatação, executa os testes unitários, verifica tipos e gera o site. O mesmo comando roda no GitHub Actions e no Dockerfile, para que o build de produção também rejeite falhas de testes.
+- **Versões**: Node 24 no CI e no build Docker. Bun 1.3.14 em `package.json#packageManager` e na imagem usada pelo Dockerfile; o setup do CI lê a versão do `packageManager`. O lockfile é obrigatório e instalado com `--frozen-lockfile`.
+- **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): roda em PRs, pushes na `main` e manualmente. Limita permissões do token à leitura, impõe timeouts e cancela execuções antigas da mesma referência. Os jobs de site e sintaxe Python rodam antes do job de imagem.
+- **Imagem de produção**: o CI constrói a imagem Docker e sobe o nginx real. O script `scripts/check-deployment.mjs` verifica as duas páginas, os bundles, os dados do mapa, cache dos arquivos com hash e o retorno 404. Depois, os testes Playwright exercitam o contêiner em desktop e celular, com respostas do TSE simuladas; o CI não depende da disponibilidade do TSE ou do horário da eleição. Em caso de falha, salva traces, capturas de tela e logs do contêiner.
+- **CD/Coolify**: a configuração histórica do projeto informa deploy automático da `main` pelo GitHub App do Coolify. Essa configuração fica fora do repositório; não há workflow de publicação nem evidência de deploy nos endpoints de deployments/status do GitHub consultados. Um build inválido falha no Dockerfile, mas isso não comprova que o Coolify espere o CI completo ou os testes de navegador antes de promover uma versão.
+- **Proteção da `main`**: na revisão de 25/10/2026, a branch não estava protegida e não exigia checks. Para que o CI seja uma condição obrigatória de publicação, configure checks obrigatórios na branch e confirme no Coolify que a promoção aguarda o workflow correspondente ao commit. Essas configurações remotas não foram alteradas nesta revisão.
+- **Servidor**: nginx serve o site com gzip e cache longo para os arquivos com hash. Dados estáticos em `/data/` podem ficar em cache por uma hora; os resultados ao vivo são buscados diretamente no TSE, fora desse cache. Arquivos `.env` e relatórios locais de testes ficam fora do contexto Docker.
+
+### Testes de navegador e do contêiner
+
+```bash
+bun install --frozen-lockfile
+bun run verify
+bunx playwright install chromium
+bun run test:e2e
+```
+
+Os testes locais usam o build em `dist/` e uma instância isolada do Astro preview. Para usar o Chrome já instalado, execute `PLAYWRIGHT_CHANNEL=chrome bun run test:e2e`.
+
+Para reproduzir a validação de produção do CI, com Docker em execução:
+
+```bash
+docker build -t eleicoes-2026:ci .
+docker run -d --name eleicoes-ci -p 127.0.0.1:8080:80 eleicoes-2026:ci
+node scripts/check-deployment.mjs http://127.0.0.1:8080
+E2E_BASE_URL=http://127.0.0.1:8080 bun run test:e2e
+docker rm -f eleicoes-ci
+```
+
+### Exterior antes da totalização
+
+Os boletins de urna são documentos de cada seção, emitidos após o encerramento local. Podem circular antes do início da divulgação nacional. Já os JSONs EA20 do painel são a totalização publicada pelo TSE, prevista a partir das 17h de Brasília, inclusive para o exterior. Somar boletins antecipadamente seria outro fluxo, que precisaria controlar a cobertura, as seções agregadas e eventuais reenvios; esse cálculo não é misturado com o total oficial do painel.
+
+Na consulta desta revisão, os arquivos EA20 de Tóquio, Hamamatsu e do exterior ainda tinham zero votos e andamento não iniciado, com geração em 24/10/2026. O cadastro EA16 do exterior também não sinalizava auxiliares publicados. Assim que os JSONs oficiais forem atualizados, o painel busca os novos valores automaticamente. O site Resultados do TSE consome os mesmos arquivos públicos; não é necessário acompanhar manualmente suas páginas.
+
+Referências: [explicação do TSE sobre totalização e boletins](https://www.tse.jus.br/comunicacao/noticias/2026/Outubro/saiba-como-acompanhar-a-totalizacao-dos-votos-apos-as-17h) e [documentação técnica](https://www.tse.jus.br/eleicoes/informacoes-tecnicas-sobre-a-divulgacao-de-resultados).
 
 ## Fontes dos dados
 

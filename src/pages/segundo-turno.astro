@@ -1,101 +1,265 @@
 ---
 import Base from '../layouts/Base.astro'
-import { summary } from '../lib/data'
-import { fmt } from '../lib/format'
-
+import '../styles/live.css'
+import { STATES } from '../lib/tse'
 const description =
-  'Flávio Bolsonaro e Lula disputam o 2º turno em 25 de outubro de 2026. Os mapas e gráficos por município entram aqui assim que o TSE publicar os dados da votação.'
+  'Apuração oficial do segundo turno de 2026: mapa do Brasil, votos do exterior, municípios, zonas eleitorais e governadores, com atualização automática pelo TSE.'
 ---
 
-<Base title="2º turno 2026 por município" description={description} current="segundo">
-  <header class="hero">
-    <p class="eyebrow">Eleição presidencial · 2º turno · 25 de outubro de 2026</p>
-    <h1 class="page-title">2º turno 2026 por município</h1>
-    <p class="takeaway">
-      Flávio Bolsonaro e Lula voltam às urnas no domingo, 25 de outubro. No 1º turno, Flávio teve{' '}
-      <b>{fmt.pct(summary.pct_flavio)}</b> dos votos válidos e Lula,{' '}
-      <b>{fmt.pct(summary.pct_lula)}</b>.
-    </p>
-  </header>
+<Base
+  title="2º turno 2026 · Apuração ao vivo no Brasil e exterior"
+  description={description}
+  current="segundo"
+>
+  <div id="live-dashboard" class="live-dashboard">
+    <header class="live-hero">
+      <p class="live-date">Eleição de 25 de outubro de 2026</p>
+      <h1 class="page-title">Segundo turno, voto a voto</h1>
+      <p class="takeaway">
+        O Brasil e os brasileiros no exterior. Acompanhe os resultados oficiais do TSE, em cada
+        lugar.
+      </p>
+      <div class="live-toolbar">
+        <p class="live-status" role="status" aria-live="polite">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span id="connection-status">Conectando ao TSE…</span>
+        </p>
+        <span id="last-checked" class="note">
+          Consulta automática a cada 30 segundos
+        </span>
+        <button id="refresh-live" type="button">
+          Atualizar agora
+        </button>
+      </div>
+      <p id="live-notice" class="live-notice" hidden></p>
+      <noscript>
+        <p class="live-notice">
+          Ative o JavaScript para acompanhar a atualização automática ou{' '}
+          <a href="https://resultados.tse.jus.br/">consulte os resultados no TSE</a>.
+        </p>
+      </noscript>
+    </header>
 
-  <section class="card waiting" aria-labelledby="aguardando">
-    <p class="status">
-      <span class="dot" aria-hidden="true"></span>Aguardando a apuração
-    </p>
-    <h2 id="aguardando">Os mapas do 2º turno chegam depois da votação</h2>
-    <p>
-      Esta aba vai ganhar os mesmos gráficos do 1º turno, município a município, assim que o TSE
-      publicar os dados abertos da votação. Até lá, o retrato completo do 1º turno continua na outra
-      aba.
-    </p>
-    <a class="button" href="/">
-      Ver o 1º turno
-    </a>
-  </section>
+    <section class="live-national" aria-labelledby="national-title">
+      <div class="live-section-head">
+        <h2 id="national-title">Brasil e exterior</h2>
+        <span id="national-time" class="note">
+          Aguardando o arquivo oficial
+        </span>
+      </div>
+      <div id="national-result" class="result-host" aria-busy="true">
+        <p class="note">Buscando candidaturas e resultados oficiais…</p>
+      </div>
+    </section>
+
+    <section class="live-swing" aria-labelledby="swing-title" aria-describedby="swing-method">
+      <div class="live-section-head">
+        <div>
+          <h2 id="swing-title">O que mudou desde o 1º turno</h2>
+          <p class="note">Variação dos percentuais estaduais, em pontos percentuais.</p>
+        </div>
+      </div>
+      <div id="swing-rankings" class="live-swing-grid">
+        <p class="note">Carregando a comparação entre os turnos…</p>
+      </div>
+      <p id="swing-ranking-status" class="note"></p>
+      <p id="swing-method" class="note">
+        Base de comparação: percentual parcial do estado no 2º turno menos seu resultado final no
+        1º, sobre todos os votos válidos de cada turno. As barras usam a mesma escala para os dois
+        candidatos e mudam com a apuração. Selecione um estado para ver os detalhes.
+      </p>
+    </section>
+
+    <section class="live-geography" aria-labelledby="map-title">
+      <div class="live-section-head">
+        <div>
+          <h2 id="map-title">Um país, muitos resultados</h2>
+          <p class="note">
+            Selecione um estado no mapa ou na lista. As cores mostram quem está à frente na apuração
+            parcial.
+          </p>
+        </div>
+      </div>
+      <div class="live-map-grid">
+        <div class="live-map-panel">
+          <label class="live-inline-label" for="map-metric">
+            Colorir por{' '}
+            <select id="map-metric">
+              <option value="leader">Candidato à frente</option>
+              <option value="progress">Seções totalizadas</option>
+            </select>
+          </label>
+          <div id="live-map" class="live-map">
+            <p class="note" id="map-loading">
+              Carregando o mapa do Brasil…
+            </p>
+          </div>
+          <div id="map-legend" class="live-map-legend"></div>
+          <p class="note">
+            Área geográfica não representa quantidade de votos. Cinza indica empate, ausência de
+            votos divulgados ou dados indisponíveis.
+          </p>
+        </div>
+        <aside class="live-place-panel" aria-labelledby="place-title">
+          <div class="live-place-controls">
+            <label for="live-uf">Estado ou abrangência</label>
+            <select id="live-uf">
+              <option value="br">Brasil e exterior</option>
+              {Object.entries(STATES)
+                .sort((a, b) => a[1].name.localeCompare(b[1].name, 'pt-BR'))
+                .map(([uf, s]) => (
+                  <option value={uf}>
+                    {s.name} ({uf.toUpperCase()})
+                  </option>
+                ))}
+              <option value="zz">Exterior</option>
+            </select>
+            <label for="live-municipality">Município ou localidade do exterior</label>
+            <select id="live-municipality" disabled>
+              <option value="">Todos</option>
+            </select>
+            <label for="live-zone">Zona eleitoral</label>
+            <select id="live-zone" disabled>
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <h3 id="place-title">Brasil e exterior</h3>
+          <p id="place-time" class="note"></p>
+          <div id="place-result" class="result-host">
+            <p class="note">Selecione uma abrangência para explorar os votos.</p>
+          </div>
+          <a
+            id="place-source"
+            href="https://resultados.tse.jus.br/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Consultar arquivo oficial
+          </a>
+          <details class="live-section-files">
+            <summary>Seções e arquivos de urna</summary>
+            <p id="section-message" class="note">
+              Selecione um município ou uma localidade do exterior e uma zona eleitoral.
+            </p>
+            <button id="load-sections" type="button" disabled>
+              Consultar seções desta zona
+            </button>
+            <div id="section-content"></div>
+          </details>
+        </aside>
+      </div>
+    </section>
+
+    <section class="live-abroad" aria-labelledby="abroad-title">
+      <div class="live-section-head">
+        <div>
+          <h2 id="abroad-title">O voto de quem está lá fora</h2>
+          <p class="note">
+            Os votos do exterior já fazem parte do total nacional. Explore também cada localidade de
+            votação.
+          </p>
+        </div>
+        <span id="abroad-time" class="note"></span>
+      </div>
+      <div id="abroad-result" class="result-host">
+        <p class="note">Consultando os resultados do exterior…</p>
+      </div>
+      <div class="live-table-tools">
+        <label for="abroad-search">
+          Buscar localidade{' '}
+          <input id="abroad-search" type="search" placeholder="Ex.: Lisboa, Tóquio, Boston" />
+        </label>
+        <span id="abroad-count" class="note"></span>
+      </div>
+      <p id="abroad-status" class="note" role="status"></p>
+      <div class="live-table-wrap">
+        <table id="abroad-table">
+          <caption class="sr-only">Votos por localidade de votação no exterior</caption>
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="note">
+        Boletins de urna podem circular antes da liberação da totalização. Este painel acompanha os
+        resultados oficiais publicados nos arquivos do TSE. O TSE identifica o exterior como ZZ e
+        fornece os resultados por localidade, não um consolidado por país. Antes da liberação
+        oficial, votos ainda não divulgados aparecem como “—”.
+      </p>
+    </section>
+
+    <section class="live-states-section" aria-labelledby="states-title">
+      <div class="live-section-head">
+        <div>
+          <h2 id="states-title">A apuração nos 26 estados e no DF</h2>
+        </div>
+        <span id="states-status" class="note"></span>
+      </div>
+      <div class="live-table-tools">
+        <label for="states-sort">
+          Ordenar por{' '}
+          <select id="states-sort">
+            <option value="name">Nome do estado</option>
+            <option value="progress">Seções totalizadas</option>
+            <option value="votes">Votos válidos</option>
+          </select>
+        </label>
+      </div>
+      <div class="live-table-wrap">
+        <table id="states-table">
+          <caption class="sr-only">Resultados presidenciais por estado</caption>
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="live-governors" aria-labelledby="governors-title">
+      <div class="live-section-head">
+        <div>
+          <h2 id="governors-title">Os governos que seguem em disputa</h2>
+          <p class="note">
+            Disputas do segundo turno identificadas na configuração oficial do TSE. Abra uma delas
+            para consultar também municípios e zonas.
+          </p>
+        </div>
+      </div>
+      <div id="governor-results" class="live-governor-grid">
+        <p class="note">Consultando as disputas estaduais…</p>
+      </div>
+    </section>
+
+    <section class="live-data-section" aria-labelledby="data-title">
+      <div class="live-section-head">
+        <div>
+          <h2 id="data-title">Os números por inteiro</h2>
+          <p id="data-scope" class="note">
+            Todos os campos do resultado selecionado no mapa ou nos filtros.
+          </p>
+        </div>
+        <button id="download-json" type="button" disabled>
+          Baixar JSON completo
+        </button>
+      </div>
+      <p class="note">
+        Percentuais de comparecimento e abstenção referem-se às seções já processadas. Resultados
+        parciais podem mudar; a indicação de eleito vem exclusivamente do TSE.
+      </p>
+      <div id="complete-data" class="live-complete-data"></div>
+      <details class="live-raw">
+        <summary>Ver JSON original do resultado selecionado</summary>
+        <pre id="raw-json">Aguardando dados do TSE.</pre>
+      </details>
+      <details class="live-raw">
+        <summary>Arquivos de acompanhamento e configuração</summary>
+        <p class="note">
+          Consulte as configurações, o acompanhamento da totalização e as fontes de cada resultado.
+        </p>
+        <ul id="live-sources"></ul>
+      </details>
+    </section>
+  </div>
+  <script>
+    import { startDashboard } from '../live/dashboard'
+    startDashboard()
+  </script>
 </Base>
-
-<style>
-  .waiting {
-    gap: var(--gap-md);
-    padding: clamp(1.5rem, 1rem + 3vw, 3rem);
-    justify-items: start;
-  }
-
-  .status {
-    margin: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: var(--gap-sm);
-    font-size: var(--text-caption);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--fg-muted);
-  }
-
-  .dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: var(--reg-nordeste);
-    animation: pulse 1.8s ease-in-out infinite;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .dot {
-      animation: none;
-    }
-  }
-
-  h2 {
-    margin: 0;
-    max-width: 24ch;
-    font-family: var(--font-display);
-    font-weight: 500;
-    font-size: var(--text-section);
-    line-height: 1.15;
-    text-wrap: balance;
-  }
-
-  .waiting p:not(.status) {
-    margin: 0;
-    max-width: 62ch;
-    color: var(--fg-muted);
-  }
-
-  .button {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.55rem 1rem;
-    border-radius: 999px;
-    font-size: var(--text-caption);
-    font-weight: 600;
-    text-decoration: none;
-    color: var(--panel);
-    background: var(--fg);
-  }
-
-  .button:hover {
-    opacity: 0.85;
-  }
-</style>

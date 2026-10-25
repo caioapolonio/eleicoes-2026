@@ -4,27 +4,34 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   site:
-    name: Site (format, types, build)
+    name: Site (format, tests, types, build)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 24
+      # setup-bun reads the exact version from package.json#packageManager.
       - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.14
       - run: bun install --frozen-lockfile
-      - run: bunx prettier --check .
-      - run: bunx astro check
-      - run: bun run build
+      - run: bun run verify
 
   pipeline:
     name: Data pipeline (syntax)
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -33,8 +40,41 @@ jobs:
       - run: python -m py_compile build_dataset.py analyze.py
 
   image:
-    name: Docker image
+    name: Production image and browser tests
+    needs: [site, pipeline]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
-      - run: docker build -t eleicoes-2026 .
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - name: Build the same image used by Coolify
+        run: docker build -t eleicoes-2026:ci .
+      - name: Start production nginx
+        run: docker run -d --name eleicoes-ci -p 127.0.0.1:8080:80 eleicoes-2026:ci
+      - name: Check routes, bundles, map data and caching
+        run: node scripts/check-deployment.mjs http://127.0.0.1:8080
+      - name: Exercise the dashboard on desktop and mobile
+        run: bun run test:e2e
+        env:
+          E2E_BASE_URL: http://127.0.0.1:8080
+      - name: Save browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs eleicoes-ci
+      - name: Remove test container
+        if: always()
+        run: docker rm -f eleicoes-ci || true

@@ -3,11 +3,11 @@
 # ---------- build: type-check and render the static site ----------
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
-COPY --from=oven/bun:1.3 /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=oven/bun:1.3.14 /usr/local/bin/bun /usr/local/bin/bun
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 COPY . .
-RUN bun run astro check && bun run build
+RUN bun run verify
 
 # ---------- serve: plain nginx with the built files ----------
 FROM nginx:1.29-alpine
