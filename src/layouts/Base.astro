@@ -16,7 +16,7 @@ const image = new URL('/og.png', Astro.site)
 
 const tabs = [
   { id: 'primeiro', label: '1º turno', href: '/' },
-  { id: 'segundo', label: '2º turno', href: '/segundo-turno/', badge: 'em breve' },
+  { id: 'segundo', label: '2º turno', href: '/segundo-turno/', badge: 'ao vivo' },
 ]
 ---
 
@@ -55,7 +55,7 @@ const tabs = [
       <main class="content">
         <slot />
       </main>
-      <SourcesFooter />
+      <SourcesFooter live={current === 'segundo'} />
     </div>
   </body>
 </html>

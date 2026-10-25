@@ -7,3 +7,10 @@ data/raw
 dashboard
 docs
 **/__pycache__
+
+# Local secrets and generated browser reports are never part of the image context
+.env
+.env.*
+playwright-report
+test-results
+*.log

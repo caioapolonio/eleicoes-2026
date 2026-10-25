@@ -18,3 +18,7 @@ __pycache__/
 
 # copy of the claude.ai dashboard page; it only runs inside that dashboard
 dashboard/
+
+# browser test artifacts
+/playwright-report/
+/test-results/

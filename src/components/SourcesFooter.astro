@@ -1,4 +1,8 @@
 ---
+interface Props {
+  live?: boolean
+}
+const { live = false } = Astro.props
 const sources = [
   {
     name: 'TSE — Portal de Dados Abertos, Resultados 2026',
@@ -41,40 +45,71 @@ const sources = [
 ---
 
 <footer class="footer" id="fontes">
-  <div class="block">
-    <h2>Fontes dos dados</h2>
-    <ul class="sources">
-      {sources.map((source) => (
-        <li>
-          <a href={source.href} target="_blank" rel="noopener noreferrer">
-            {source.name}
-          </a>
-          <span>{source.detail}</span>
-        </li>
-      ))}
-    </ul>
-  </div>
-  <div class="block">
-    <h2>Como foi feito</h2>
-    <ul class="method">
-      <li>
-        Votos somados por município a partir das zonas eleitorais. Votos do exterior ficam de fora,
-        então os percentuais nacionais diferem do oficial na segunda casa decimal.
-      </li>
-      <li>
-        Cada município pesa pelo número de votos válidos nas faixas, correlações e regressões; a
-        renda entra em escala logarítmica.
-      </li>
-      <li>
-        Boa Esperança do Norte (MT) foi criado depois do Censo 2022 e fica fora das análises de
-        perfil e do mapa.
-      </li>
-      <li>
-        São relações entre municípios, não entre eleitores, e não dizem como cada pessoa votou. O
-        perfil é de 2022 e o voto, de 2026.
-      </li>
-    </ul>
-  </div>
+  {live ? (
+    <>
+      <div class="block">
+        <h2>Dados oficiais, consulta automática</h2>
+        <p>
+          Resultados do TSE para o segundo turno de 25/10/2026, consultados diretamente nos arquivos
+          públicos de divulgação. Cada resultado informa a data e a hora de geração do arquivo, no
+          horário de Brasília. O total nacional inclui os votos do exterior.
+        </p>
+        <a
+          href="https://www.tse.jus.br/eleicoes/informacoes-tecnicas-sobre-a-divulgacao-de-resultados"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Documentação técnica do TSE
+        </a>
+      </div>
+      <div class="block">
+        <h2>Como acompanhar</h2>
+        <p>
+          Novas consultas a cada 30 segundos após o ciclo anterior, enquanto a aba estiver visível.
+          Em caso de falha, o painel mantém os últimos dados recebidos e sinaliza a interrupção. As
+          cores indicam a liderança parcial; somente o TSE informa o eleito.
+        </p>
+        <p>A malha geográfica vem do IBGE. Não há projeção ou estimativa de votos neste painel.</p>
+      </div>
+    </>
+  ) : (
+    <>
+      <div class="block">
+        <h2>Fontes dos dados</h2>
+        <ul class="sources">
+          {sources.map((source) => (
+            <li>
+              <a href={source.href} target="_blank" rel="noopener noreferrer">
+                {source.name}
+              </a>
+              <span>{source.detail}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div class="block">
+        <h2>Como foi feito</h2>
+        <ul class="method">
+          <li>
+            Votos somados por município a partir das zonas eleitorais. Votos do exterior ficam de
+            fora, então os percentuais nacionais diferem do oficial na segunda casa decimal.
+          </li>
+          <li>
+            Cada município pesa pelo número de votos válidos nas faixas, correlações e regressões; a
+            renda entra em escala logarítmica.
+          </li>
+          <li>
+            Boa Esperança do Norte (MT) foi criado depois do Censo 2022 e fica fora das análises de
+            perfil e do mapa.
+          </li>
+          <li>
+            São relações entre municípios, não entre eleitores, e não dizem como cada pessoa votou.
+            O perfil é de 2022 e o voto, de 2026.
+          </li>
+        </ul>
+      </div>
+    </>
+  )}
 </footer>
 
 <style>
